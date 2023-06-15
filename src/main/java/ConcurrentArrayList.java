@@ -164,8 +164,17 @@ public class ConcurrentArrayList<E> implements List<E> {
 
     @Override
     public boolean contains(Object o) {
-        for (Object element : array) {
-            if (element.equals(o)) {
+        if (o == null) {
+            for (int i = 0; i  < size; i++) {
+                if (array[i] == null) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        for (int i = 0; i < size; i++) {
+            if (array[i].equals(o)) {
                 return true;
             }
         }
@@ -261,28 +270,26 @@ public class ConcurrentArrayList<E> implements List<E> {
         boolean changed = false;
 
         synchronized(this) {
-
             for (Object element : c) {
                 changed |= remove(element);
             }
-
         }
 
         return changed;
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public boolean containsAll(Collection c) {
         HashSet<Object> set = new HashSet<Object>(c);
-        boolean contains = true;
 
-        int count = 0;
-
-        for (Object element : array) {
-            count += (set.contains(element)) ? 1 : 0;
+        synchronized (this) {
+            for (int i = 0; i < size; i++) {
+                set.remove(array[i]);
+            }
         }
 
-        return count == c.size();
+        return set.isEmpty();
     }
 
     private void rangeCheck(int index) {
@@ -292,8 +299,26 @@ public class ConcurrentArrayList<E> implements List<E> {
         }
 
         if (index < 0) {
-            throw new IndexOutOfBoundsException();
+            throw new IndexOutOfBoundsException("Negative index");
         }
+    }
+
+    public synchronized String toString() {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("[");
+
+        for (int i = 0; i < size; i++) {
+            sb.append(array[i].toString());
+
+            if (i != size - 1) {
+                sb.append(", ");
+            }
+        }
+
+        sb.append("]");
+
+        return sb.toString();
     }
 
 
@@ -397,5 +422,4 @@ public class ConcurrentArrayList<E> implements List<E> {
             lastRet = -1;
         }
     }
-
 }
